@@ -105,3 +105,58 @@ Sub FillCellsWithRandomStrings()
 End Sub
 
 
+Function WorksheetExists(sheetName As String) As Boolean
+    On Error Resume Next
+    WorksheetExists = Not Worksheets(sheetName) Is Nothing
+    On Error GoTo 0
+End Function
+
+このコードは、指定された名前のワークシートが存在するかどうかを判定するカスタム関数 WorksheetExists を定義しています。
+
+Function WorksheetExists(sheetName As String) As Boolean:
+
+Function: これが関数の宣言を示すキーワードです。
+WorksheetExists: 関数の名前を指定しています。任意の名前を選べますが、ここでは「WorksheetExists」という名前にしています。
+(sheetName As String) As Boolean: この関数は1つの引数を受け取り、その引数の型と戻り値の型を指定しています。引数は sheetName という文字列型で、戻り値は真偽値（Boolean）です。
+On Error Resume Next:
+
+これはエラーハンドリングの一種で、エラーが発生した場合に処理を中断せず、次のステートメントに進むように指示しています。これにより、エラーが発生しても実行は続行されます。
+WorksheetExists = Not Worksheets(sheetName) Is Nothing:
+
+WorksheetExists: 戻り値として返す変数です。この変数に代入することで関数の戻り値が決まります。
+Worksheets(sheetName): 引数として渡された sheetName で指定されたワークシートを取得しようとしています。
+Is Nothing: オブジェクトが存在しないことを示す条件です。ここでは取得したワークシートが存在しない場合に True を返すようになっています。
+Not: 論理否定演算子で、条件を反転させます。つまり、ワークシートが存在する場合は False を、存在しない場合は True を返します。
+On Error GoTo 0:
+
+エラーハンドリングを元に戻すためのステートメントです。以降のコードではエラーが発生したら中断するようになります。
+
+Sub Main()
+    Dim ws As Worksheet
+    If WorksheetExists("不明なSheet名") Then
+        Set ws = Worksheets("不明なSheet名")
+        ' シートが存在する場合の処理
+        ' ...
+    Else
+        ' シートが存在しない場合の処理
+        ' ...
+    End If
+End Sub
+
+このコードは、上記で定義した WorksheetExists 関数を使用して、ワークシートの存在を確認し、それに基づいて処理を行うサブルーチン Main を定義しています。
+
+Sub Main():
+
+サブルーチン（サブプロシージャ）の宣言です。コードの実行を開始するための入り口です。
+Dim ws As Worksheet:
+
+ws という変数を Worksheet 型として宣言しています。これは後でワークシートオブジェクトを格納するための変数です。
+If WorksheetExists("不明なSheet名") Then:
+
+上で定義した WorksheetExists 関数を呼び出して、指定した名前のワークシートが存在するか確認しています。もし存在する場合は条件が True になります。
+Set ws = Worksheets("不明なSheet名"):
+
+ws 変数に、指定した名前のワークシートオブジェクトを代入しています。存在しない場合でも、ws には Nothing が代入される可能性があります。
+' シートが存在する場合の処理 および ' シートが存在しない場合の処理:
+
+If 文の条件に基づいて、ワークシートが存在するかどうかに応じてそれぞれの処理を行います。必要に応じてコードを追加してください。
