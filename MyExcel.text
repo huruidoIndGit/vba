@@ -1,0 +1,1 @@
+=IF(OR(WEEKDAY(B1,2)=6, WEEKDAY(B1,2)=7), "休", "")
