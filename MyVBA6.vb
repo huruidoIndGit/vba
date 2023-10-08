@@ -79,3 +79,20 @@ Function ExtractRange(cell As range) As Variant
         End If
     End If
 End Function
+
+
+
+
+
+
+
+'特定の行以降の行をすべて削除する
+Sub DeleteRows()
+    Dim maxRow As Long
+    maxRow = Cells(Rows.Count, 4).End(xlUp).Row             'どの列なら問題なく取れるか
+    Debug.Print maxRow
+    ' 削除を開始する行番号
+    Dim deleteRow As Integer
+    deleteRow = maxRow + 10 '削除する行は少し下にしておく
+    Rows(deleteRow & ":" & Rows.Count).Delete
+End Sub
