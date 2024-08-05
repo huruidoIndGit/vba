@@ -1,0 +1,120 @@
+' MyClassクラスモジュール
+Private pLongValue As Long
+Private pStringValue As String
+
+' Long型のプロパティ
+Public Property Get LongValue() As Long
+    LongValue = pLongValue
+End Property
+
+Public Property Let LongValue(value As Long)
+    pLongValue = value
+End Property
+
+' String型のプロパティ
+Public Property Get StringValue() As String
+    StringValue = pStringValue
+End Property
+
+Public Property Let StringValue(value As String)
+    pStringValue = value
+End Property
+
+===============================================
+
+Sub AccessShapeGroups()
+    Dim ws As Worksheet
+    Dim shp As Shape
+    Dim grp As Shape
+    Dim i As Integer
+    
+    ' ワークシートを設定
+    Set ws = ThisWorkbook.Sheets("Sheet1") ' シート名を適宜変更してください
+    
+    ' シート上のすべての図形をループ
+    For Each shp In ws.Shapes
+        ' 図形がグループであるかを確認
+        If shp.Type = msoGroup Then
+            ' グループ名が "@+連番" で始まるかを確認
+            If Left(shp.Name, 1) = "@" Then
+                Debug.Print shp.Name
+                ' グループ内の図形にアクセス
+                For i = 1 To shp.GroupItems.Count
+                    Set grp = shp.GroupItems(i)
+                     If JudgeShapeOval(grp) Then
+                    ' ここで各図形に対する処理を行う
+                        Debug.Print grp.Name ' 例として図形名を出力
+                        Dim number As Long
+                        number = ProcessOvalShape(grp)
+                        Debug.Print number
+                    Else
+                        
+                    End If
+                Next i
+            End If
+        End If
+    Next shp
+End Sub
+
+'楕円か判定
+Private Function JudgeShapeOval(grp As Shape) As Boolean
+        ' 図形が楕円かどうかを判定
+    JudgeShapeOval = (grp.AutoShapeType = msoShapeOval)
+End Function
+
+
+Function ProcessOvalShape(grp As Shape) As Long
+    Dim text As String
+    Dim result As Long
+    
+    ' 楕円図形の中に書かれている文字列を読み取る
+    text = grp.TextFrame.Characters.text
+    
+    ' 文字列が存在するかを確認
+    If Len(text) > 0 Then
+        ' 数値かどうかを判定
+        If IsNumeric(text) Then
+            ' 数値の場合はその数値を返す
+            result = CDbl(text)
+        Else
+            ' 数値以外なら-1を返す
+            result = -1
+        End If
+    Else
+        ' 文字列が存在しない場合も-1を返す
+        result = -1
+    End If
+    
+    ProcessOvalShape = result
+End Function
+
+
+'ClassとDictionary
+Sub UseClassWithDictionary()
+    Dim dict As Object
+    Dim myClass1 As MyClass
+    Dim myClass2 As MyClass
+    Dim key As Variant
+    
+    ' Dictionaryを作成
+    Set dict = CreateObject("Scripting.Dictionary")
+    
+    ' MyClassのインスタンスを作成
+    Set myClass1 = New MyClass
+    myClass1.LongValue = 123
+    myClass1.StringValue = "First"
+    
+    Set myClass2 = New MyClass
+    myClass2.LongValue = 456
+    myClass2.StringValue = "Second"
+    
+    ' Dictionaryにインスタンスを追加
+    dict.Add "FirstKey", myClass1
+    dict.Add "SecondKey", myClass2
+    
+    ' Dictionaryをループして内容を表示
+    For Each key In dict.Keys
+        Debug.Print key & ": LongValue = " & dict(key).LongValue & ", StringValue = " & dict(key).StringValue
+    Next key
+End Sub
+
