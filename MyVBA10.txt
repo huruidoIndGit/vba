@@ -1,0 +1,318 @@
+Option Explicit
+
+Public Sub Run()
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim dict As Object
+    Dim myClass As myClass
+    Dim key As Variant
+    Dim i As Integer
+    Dim cell As Range
+    
+    Set wb = 開いているブックの取得Module.GetOtherOpenWorkbook 'もう一つのBookを取得
+    Debug.Print wb.Name
+    
+    
+        ' Dictionaryを作成
+    Set dict = CreateObject("Scripting.Dictionary")
+    
+     ' Workbook内のすべてのシートに順にアクセス
+    For Each ws In wb.Sheets
+        ' D1セルから下に順に取得
+        Set cell = ws.Range("D11")
+        i = 1
+        
+        Do While Not IsEmpty(cell)
+            ' 結合セルに突き当たるかを判定
+            If cell.MergeCells Then
+                Exit Do
+            End If
+            
+            ' MyClassのインスタンスを作成
+            Set myClass = New myClass
+            myClass.SheetIndex = "@" & ws.Index ' シートインデックスを設定
+            myClass.DValue = cell.value ' D列の値を設定
+            myClass.iValue = cell.Offset(0, 5).value ' D列と同じ行のI列の値を設定
+            dict.Add ws.Name & "_Key" & i, myClass
+            
+            ' 次のセルに移動
+            Set cell = cell.Offset(1, 0)
+            i = i + 1
+        Loop
+    Next ws
+    
+        ' Dictionaryをループして内容を表示
+'    For Each key In dict.Keys
+'        Debug.Print key & ": SheetIndex = " & dict(key).SheetIndex & ", DValue = " & dict(key).DValue & ", IValue = " & dict(key).iValue
+'    Next key
+    
+    Dim selectValue
+     selectValue = DisplayAndSelectUniqueIValues(dict)
+     Call AccessShapeGroups(selectValue, dict)
+End Sub
+
+
+'I列の内、重複を除いた文字列を表示して選択したものを返す
+Function DisplayAndSelectUniqueIValues(dict As Object) As String
+    Dim uniqueValues As Object
+    Dim key As Variant
+    Dim iValue As String
+    Dim i As Integer
+    Dim selectedValue As String
+    
+    ' Dictionaryを作成して重複を除くIValueを格納
+    Set uniqueValues = CreateObject("Scripting.Dictionary")
+    
+    For Each key In dict.Keys
+        iValue = dict(key).iValue
+        If Not uniqueValues.Exists(iValue) Then
+            uniqueValues.Add iValue, Nothing
+        End If
+    Next key
+    
+    ' 重複を除くIValueを表示
+    Dim valueList As String
+    For Each key In uniqueValues.Keys
+        valueList = valueList & key & vbCrLf
+    Next key
+    
+    ' ユーザーに選択させる
+    selectedValue = InputBox("Select a value from the list:" & vbCrLf & valueList, "Select IValue")
+    
+    ' 選択された値を表示
+    If uniqueValues.Exists(selectedValue) Then
+'        MsgBox "You selected: " & selectedValue
+        DisplayAndSelectUniqueIValues = selectedValue
+    Else
+        Exit Function
+    End If
+End Function
+
+
+
+
+
+
+
+Sub AccessShapeGroups(selectValue, dict As Object)
+    Dim ws As Worksheet
+    Dim shp As Shape
+    Dim grp As Shape
+    Dim i As Integer
+    Dim shapesList As Object
+    Dim shapeName As Variant
+    Dim key As Variant
+    Dim ovalShapes As Object
+    Dim ovalShape As Variant
+    
+    ' ワークシートを設定
+    Set ws = ThisWorkbook.Sheets("Sheet1") ' シート名を適宜変更してください
+    
+    ' 図形名を格納するコレクションを作成
+    Set shapesList = CreateObject("System.Collections.ArrayList")
+    
+    ' シート上のすべての図形をループして名前をコレクションに追加
+    For Each shp In ws.Shapes
+        If shp.Type = msoGroup And Left(shp.Name, 1) = "@" Then
+            shapesList.Add shp.Name
+        End If
+    Next shp
+    
+    ' 図形名をソート
+    shapesList.Sort
+    
+    ' 楕円図形とその数値を格納するコレクションを作成
+    Set ovalShapes = CreateObject("System.Collections.ArrayList")
+    
+    ' shapesListをループ
+    For Each shapeName In shapesList
+        Set shp = ws.Shapes(shapeName)
+        Debug.Print shp.Name
+        
+        ' GroupItemsをループ
+        For i = 1 To shp.GroupItems.Count
+            Set grp = shp.GroupItems(i)
+            If JudgeShapeOval(grp) Then
+                Dim number As Long
+                number = ProcessOvalShape(grp)
+                If number <> -1 Then
+                    ovalShapes.Add Array(grp, number)
+                End If
+            End If
+        Next i
+    Next shapeName
+    
+    ' 楕円図形を数値でソート
+    Call SortOvalShapes(ovalShapes)
+    
+    ' ソートされた楕円図形を処理
+    For Each ovalShape In ovalShapes
+        Set grp = ovalShape(0)
+        Dim num As Long
+        num = ovalShape(1)
+        Debug.Print grp.Name & "    ==> " & num ' 例として図形名と中の数値を出力
+        
+        ' DictionaryのキーをループしてSheetIndexと一致する場合に処理を行う
+        For Each key In dict.Keys
+            If dict(key).SheetIndex = grp.ParentGroup.Name Then
+                ' selectValueと一致する場合に楕円図形を削除
+                If dict(key).iValue = selectValue Then
+                    grp.Visible = False
+                    Debug.Print "Deleted shape: " & grp.Name
+                End If
+            End If
+        Next key
+    Next ovalShape
+End Sub
+
+
+
+
+
+
+
+
+
+' 楕円図形を数値でソート
+Sub SortOvalShapes(ovalShapes As Object)
+    Dim i As Integer, j As Integer
+    Dim temp As Variant
+    
+    ' バブルソートアルゴリズムを使用してソート
+    For i = 0 To ovalShapes.Count - 2
+        For j = i + 1 To ovalShapes.Count - 1
+            If ovalShapes(i)(1) > ovalShapes(j)(1) Then
+                ' 配列の要素を交換
+                temp = ovalShapes(i)
+                ovalShapes(i) = ovalShapes(j)
+                ovalShapes(j) = temp
+            End If
+        Next j
+    Next i
+End Sub
+
+
+
+
+
+' 楕円か判定
+Private Function JudgeShapeOval(grp As Shape) As Boolean
+    ' 図形が楕円かどうかを判定
+    JudgeShapeOval = (grp.AutoShapeType = msoShapeOval)
+End Function
+
+' 楕円図形の中に書かれている文字列（数値）を取得
+Function ProcessOvalShape(grp As Shape) As Long
+    Dim text As String
+    Dim result As Long
+    
+    ' 楕円図形の中に書かれている文字列を読み取る
+    text = grp.TextFrame.Characters.text
+    
+    ' 文字列が存在するかを確認
+    If Len(text) > 0 Then
+        ' 数値かどうかを判定
+        If IsNumeric(text) Then
+            ' 数値の場合はその数値を返す
+            result = CLng(text)
+        Else
+            ' 数値以外なら-1を返す
+            result = -1
+        End If
+    Else
+        ' 文字列が存在しない場合も-1を返す
+        result = -1
+    End If
+    
+    ProcessOvalShape = result
+End Function
+
+' ArrayListをカスタム関数でソート
+Public Sub SortArrayList(arrList As Object, compareFunc As Long)
+    Dim i As Integer, j As Integer
+    Dim temp As Variant
+    
+    For i = 0 To arrList.Count - 2
+        For j = i + 1 To arrList.Count - 1
+            If CallByName(compareFunc, "CompareOvalShapes", VbMethod, arrList(i), arrList(j)) > 0 Then
+                temp = arrList(i)
+                arrList(i) = arrList(j)
+                arrList(j) = temp
+            End If
+        Next j
+    Next i
+End Sub
+
+
+
+
+
+
+==================================
+myClass
+' MyClassクラスモジュール
+Option Explicit
+
+Private pSheetIndex As String
+Private pDValue As Variant
+Private pIValue As String
+
+' SheetIndexのプロパティ
+Public Property Get SheetIndex() As String
+    SheetIndex = pSheetIndex
+End Property
+
+Public Property Let SheetIndex(value As String)
+    pSheetIndex = value
+End Property
+
+' D列の値のプロパティ
+Public Property Get DValue() As Variant
+    DValue = pDValue
+End Property
+
+Public Property Let DValue(value As Variant)
+    pDValue = value
+End Property
+
+' I列の値のプロパティ
+Public Property Get iValue() As String
+    iValue = pIValue
+End Property
+
+Public Property Let iValue(value As String)
+    pIValue = value
+End Property
+
+
+
+==================================
+Option Explicit
+
+Sub test()
+    Dim wb As Workbook
+    Set wb = GetOtherOpenWorkbook
+    Debug.Print wb.Name
+End Sub
+
+Function GetOtherOpenWorkbook() As Workbook
+    Dim wb As Workbook
+    Dim targetWorkbook As Workbook
+    
+    ' 開いているすべてのブックをループ
+    For Each wb In Workbooks
+        ' VBAを動かしているブックでない場合
+        If wb.Name <> ThisWorkbook.Name Then
+            Set targetWorkbook = wb
+            Exit For
+        End If
+    Next wb
+    
+    ' 目的のブックが見つかったかどうかを確認
+    If Not targetWorkbook Is Nothing Then
+        Set GetOtherOpenWorkbook = targetWorkbook
+    Else
+        Exit Function
+    End If
+End Function
+
