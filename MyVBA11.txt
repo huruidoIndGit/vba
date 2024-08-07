@@ -1,0 +1,30 @@
+'結果を表示するための新しいシートを作成
+'各シートの指定セルの値を取得し、「Summary」シートに表示するマクロ
+Sub CollectData()
+    '文字列を取得したい指定セルアドレス
+    Const adrs = "I11"
+    
+    Dim ws As Worksheet
+    Dim summarySheet As Worksheet
+    Dim i As Integer
+    
+    ' Summaryシートを設定
+    Set summarySheet = ThisWorkbook.Sheets("Summary")
+    
+    ' Summaryシートの初期化
+    summarySheet.Cells.Clear
+    
+    ' ヘッダーを設定
+    summarySheet.Cells(1, 1).Value = "Sheet Name"
+    summarySheet.Cells(1, 2).Value = "B2 Value"
+    
+    ' データを収集
+    i = 2
+    For Each ws In ThisWorkbook.Sheets
+        If ws.Name <> "Summary" Then
+            summarySheet.Cells(i, 1).Value = ws.Name
+            summarySheet.Cells(i, 2).Value = ws.Range(adrs).Value
+            i = i + 1
+        End If
+    Next ws
+End Sub
