@@ -1,0 +1,61 @@
+Sub GroupAndCopyShapesToAnotherFile()
+    Dim ws As Worksheet
+    Dim shp As Shape
+    Dim shpRange As Range
+    Dim shpGroup As Shape
+    Dim shpArray() As Variant
+    Dim i As Integer
+    Dim destWorkbook As Workbook
+    Dim destSheet As Worksheet
+    Dim pasteCells As Variant
+    Dim rowIndex As Integer
+    Dim colIndex As Integer
+    
+    ' ワークシートを設定
+    Set ws = ThisWorkbook.Sheets("Sheet1")
+    
+    ' 図形を検索する範囲を設定
+    Set shpRange = ws.Range("A1:D10")
+    
+    ' 図形を配列に追加
+    i = 0
+    For Each shp In ws.Shapes
+        If Not Intersect(shpRange, shp.TopLeftCell) Is Nothing Then
+            ReDim Preserve shpArray(i)
+            Set shpArray(i) = shp
+            i = i + 1
+        End If
+    Next shp
+    
+    ' 図形をグループ化
+    If i > 0 Then
+        Set shpGroup = ws.Shapes.Range(shpArray).Group
+        shpGroup.Name = "MyGroupedShapes"
+        
+        ' グループ化した図形をコピー
+        shpGroup.Copy
+        
+        ' 別のExcelファイル「Hoge」を開く
+        Set destWorkbook = Workbooks.Open("C:\Path\To\Your\File\Hoge.xlsx")
+        
+        ' ペースト先のセルを2次元配列で定義
+        pasteCells = Array(Array(1, 1), Array(5, 1), Array(10, 1)) ' 例: (行番号, 列番号)
+        
+        ' ペースト先のシートを設定
+        Set destSheet = destWorkbook.Sheets("Sheet1")
+        
+        ' 2次元配列を見て順にペースト
+        For i = LBound(pasteCells) To UBound(pasteCells)
+            rowIndex = pasteCells(i)(0)
+            colIndex = pasteCells(i)(1)
+            destSheet.Cells(rowIndex, colIndex).PasteSpecial
+        Next i
+        
+        ' コピーした図形を選択解除
+        Application.CutCopyMode = False
+        
+        ' 保存して閉じる
+        destWorkbook.Save
+        destWorkbook.Close
+    End If
+End Sub
