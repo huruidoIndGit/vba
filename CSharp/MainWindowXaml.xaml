@@ -1,0 +1,18 @@
+<Window x:Class="WpfApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MainWindow"
+        Height="600"
+        Width="800">
+    <!-- 縦長に修正 -->
+    <Grid>
+        <!-- ログを表示するためのTextBoxをウィンドウに合わせてサイズ調整 -->
+        <TextBox x:Name="LogTextBox"
+                 HorizontalAlignment="Stretch"
+                 VerticalAlignment="Stretch"
+                 Margin="10"
+                 TextWrapping="Wrap"
+                 VerticalScrollBarVisibility="Auto"
+                 IsReadOnly="True"/>
+    </Grid>
+</Window>
