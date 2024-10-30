@@ -9,9 +9,9 @@ namespace WpfApp
 {
     public partial class MainWindow : Window
     {
-        private readonly string csvFilePath = @"C:\Users\rll2p\Desktop\URL List.csv";
-        private readonly string uploadFilesFolderPath = @"C:\Users\rll2p\Desktop\UploadFiles";
-        private readonly string inputFilePath = @"C:\Users\rll2p\Desktop\input.txt"; // 入力内容の保存先ファイル
+        private readonly string csvFilePath = @"C:\Users\hoge\Desktop\URL List.csv";
+        private readonly string uploadFilesFolderPath = @"C:\Users\hoge\Desktop\UploadFiles";
+        private readonly string inputFilePath = @"C:\Users\hoge\Desktop\input.txt"; // 入力内容の保存先ファイル
         private LoadCsvDataClass csvLoader;
 
         public MainWindow()
